@@ -188,8 +188,8 @@ def _possible_extensions(filename):
         exts.append(filename)
     
     filename_parts = filename_parts[1:]
-    for right in xrange(len(filename_parts),-1,-1):
-        for left in xrange(right):
+    for right in range(len(filename_parts),-1,-1):
+        for left in range(right):
             exts.append(_merge_extensions(filename_parts[left:right]))
     return exts
     
