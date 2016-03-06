@@ -175,16 +175,16 @@ def _possible_extensions(filename):
     
     Rules/Expectations:
         filename         => List of possible linter keys
-        .gitlint         => [.gitlint]
-        travis.yml       => [travis.yml, .yml]
-        phpunit.xml.dist => [phpunit.xml.dist, .xml.dist, .dist, .xml]
-        .b.c.d           => [.b.c.d, .c.d, .d, .b.c, .b]
-        a.b.c.d          => [a.b.c.d, .b.c.d, .c.d, .d, .b.c, .b]
+        .gitlint         => ['.gitlint']
+        travis.yml       => ['travis.yml', '.yml']
+        phpunit.xml.dist => ['phpunit.xml.dist', '.xml.dist', '.dist', '.xml']
+        .b.c.d           => ['.b.c.d', '.c.d', '.d', '.b.c', '.c', '.b']
+        a.b.c.d          => ['a.b.c.d', '.b.c.d', '.c.d', '.d', '.b.c', '.c', '.b']
     """
     exts = []
     filename_parts = filename.split('.')
     
-    if not filename[0] == '.':
+    if filename and not filename[0] == '.':
         exts.append(filename)
     
     filename_parts = filename_parts[1:]
