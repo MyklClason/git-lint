@@ -165,6 +165,44 @@ def parse_yaml_config(yaml_config, repo_home):
     return config
 
 
+def _merge_extensions(exts):
+    """ Merges extensions into a single file extension. """
+    return '.' + '.'.join(exts)
+
+# TODO(anyone): Add tests and optimize
+def _possible_extensions(filename):
+    """Extracts a list of possible linters from filename.
+    
+    Rules/Expectations:
+        filename         => List of possible linter keys
+        .gitlint         => [.gitlint]
+        travis.yml       => [travis.yml, .yml]
+        phpunit.xml.dist => [phpunit.xml.dist, .xml.dist, .dist, .xml]
+        .b.c.d           => [.b.c.d, .c.d, .d, .b.c, .b]
+        a.b.c.d          => [a.b.c.d, .b.c.d, .c.d, .d, .b.c, .b]
+    """
+    exts = []
+    filename_parts = filename.split('.')
+    
+    if not filename[0] == '.':
+        exts.append(filename)
+    
+    filename_parts = filename_parts[1:]
+    for right in xrange(len(filename_parts),-1,-1):
+        for left in xrange(right):
+            exts.append(_merge_extensions(filename_parts[left:right]))
+    return exts
+    
+    
+# TODO(anyone): Add tests and optimize
+def _best_match_extension(filename, config):
+    """ Returns the best match extension for the linter, if any """
+    for ext in _possible_extensions(filename):
+        if ext in config:
+            return ext
+    return False
+    
+    
 def lint(filename, lines, config):
     """Lints a file.
 
@@ -180,7 +218,7 @@ def lint(filename, lines, config):
       then a field 'skipped' will be set with the reasons. Otherwise, the field
       'comments' will have the messages.
     """
-    _, ext = os.path.splitext(filename)
+    ext = _best_match_extension(filename, config)
     if ext in config:
         output = collections.defaultdict(list)
         for linter in config[ext]:
