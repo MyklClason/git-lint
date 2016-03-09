@@ -217,7 +217,7 @@ def lint(filename, lines, config):
       'comments' will have the messages.
     """
     ext = _best_match(filename, config)
-    if ext and ext in config:
+    if ext in config:
         output = collections.defaultdict(list)
         for linter in config[ext]:
             linter_output = linter(filename, lines)
