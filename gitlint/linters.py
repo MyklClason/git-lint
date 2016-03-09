@@ -171,12 +171,13 @@ def _matcher_priority_function(matcher):
     """Priority (cost) function for a filename. Lower values take priority."""
     parts = matcher.split('.')
     
-    if matcher[0] != '.' and len(parts) == 1:
-        # Extensionless matchers are lowest priority to avoid false postives.
-        return 0
-    elif len(parts) > 1 and not parts[0]:
+    if len(parts) >= 1 and not parts[0]:
         # Ignore the root if only an extension is provided.
         parts = parts[1:]
+        
+    if matcher and matcher[0] != '.' and len(parts) == 1:
+        # Extensionless matchers are lowest priority to avoid false postives.
+        return 0
     return len(parts)
 
 
@@ -194,7 +195,9 @@ def _best_match(filename, config):
     pattern = '|'.join(priority_sort(config.keys()))
     matches = re.findall(pattern,filename)
     if matches:
-        return priority_sort(matches)[0]
+        best_match = priority_sort(matches)[0]
+        if best_match:
+            return best_match
     return False
 
 
