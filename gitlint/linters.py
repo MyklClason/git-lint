@@ -165,12 +165,8 @@ def parse_yaml_config(yaml_config, repo_home):
     return config
 
 
-def _merge_extensions(exts):
-    """ Merges extensions into a single file extension. """
-    return '.' + '.'.join(exts)
-
 # TODO(anyone): Add tests and optimize
-def _possible_extensions(filename):
+def _possible_matches(filename):
     """Extracts a list of possible linters from filename.
     
     Rules/Expectations:
@@ -181,28 +177,28 @@ def _possible_extensions(filename):
         .b.c.d           => ['.b.c.d', '.c.d', '.d', '.b.c', '.c', '.b']
         a.b.c.d          => ['a.b.c.d', '.b.c.d', '.c.d', '.d', '.b.c', '.c', '.b']
     """
-    exts = []
+    matches = []
     filename_parts = filename.split('.')
     
     if filename and not filename[0] == '.':
-        exts.append(filename)
+        matches.append(filename)
     
     filename_parts = filename_parts[1:]
     for right in range(len(filename_parts),-1,-1):
         for left in range(right):
-            exts.append(_merge_extensions(filename_parts[left:right]))
-    return exts
+            matches.append('.' + '.'.join(filename_parts[left:right]))
+    return matches
     
     
 # TODO(anyone): Add tests and optimize
-def _best_match_extension(filename, config):
+def _best_match(filename, config):
     """ Returns the best match extension for the linter, if any """
-    for ext in _possible_extensions(filename):
+    for ext in _possible_matches(filename):
         if ext in config:
             return ext
     return False
-    
-    
+
+
 def lint(filename, lines, config):
     """Lints a file.
 
@@ -218,7 +214,7 @@ def lint(filename, lines, config):
       then a field 'skipped' will be set with the reasons. Otherwise, the field
       'comments' will have the messages.
     """
-    ext = _best_match_extension(filename, config)
+    ext = _best_match(filename, config)
     if ext in config:
         output = collections.defaultdict(list)
         for linter in config[ext]:
