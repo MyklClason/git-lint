@@ -190,7 +190,7 @@ def priority_sort(matchers):
 
 # TODO(anyone): Add tests and optimize
 def _best_match(filename, config):
-    """ Returns the best match extension for the linter or False if none"""
+    """Returns the best match extension for the linter or False if none"""
     pattern = '|'.join(priority_sort(config.keys()))
     matches = re.findall(pattern,filename)
     if matches:
