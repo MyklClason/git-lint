@@ -19,6 +19,7 @@ import os
 import os.path
 import string
 import subprocess
+import re
 
 import gitlint.utils as utils
 
@@ -166,36 +167,34 @@ def parse_yaml_config(yaml_config, repo_home):
 
 
 # TODO(anyone): Add tests and optimize
-def _possible_matches(filename):
-    """Extracts a list of possible linters from filename.
+def _matcher_priority_function(matcher):
+    """Priority (cost) function for a filename. Lower values take priority."""
+    parts = matcher.split('.')
     
-    Rules/Expectations:
-        filename         => List of possible linter keys
-        .gitlint         => ['.gitlint']
-        travis.yml       => ['travis.yml', '.yml']
-        phpunit.xml.dist => ['phpunit.xml.dist', '.xml.dist', '.dist', '.xml']
-        .b.c.d           => ['.b.c.d', '.c.d', '.d', '.b.c', '.c', '.b']
-        a.b.c.d          => ['a.b.c.d', '.b.c.d', '.c.d', '.d', '.b.c', '.c', '.b']
-    """
-    matches = []
-    filename_parts = filename.split('.')
+    if matcher[0] != '.' and len(parts) == 1:
+        # Extensionless matchers are lowest priority to avoid false postives.
+        return 0
+    elif len(parts) > 1 and not parts[0]:
+        # Ignore the root if only an extension is provided.
+        parts = parts[1:]
+    return len(parts)
+
+
+# TODO(anyone): Add tests and optimize
+def priority_sort(matchers):
+    """Prioritizes the list via the matchers priority function"""
+    return sorted(matchers, 
+                  key = _matcher_priority_function, 
+                  reverse = True)
     
-    if filename and not filename[0] == '.':
-        matches.append(filename)
-    
-    filename_parts = filename_parts[1:]
-    for right in range(len(filename_parts),-1,-1):
-        for left in range(right):
-            matches.append('.' + '.'.join(filename_parts[left:right]))
-    return matches
-    
-    
+
 # TODO(anyone): Add tests and optimize
 def _best_match(filename, config):
-    """ Returns the best match extension for the linter, if any """
-    for ext in _possible_matches(filename):
-        if ext in config:
-            return ext
+    """ Returns the best match extension for the linter or False if none"""
+    pattern = '|'.join(priority_sort(config.keys()))
+    matches = re.findall(pattern,filename)
+    if matches:
+        return priority_sort(matches)[0]
     return False
 
 
@@ -215,7 +214,7 @@ def lint(filename, lines, config):
       'comments' will have the messages.
     """
     ext = _best_match(filename, config)
-    if ext in config:
+    if ext and ext in config:
         output = collections.defaultdict(list)
         for linter in config[ext]:
             linter_output = linter(filename, lines)
